@@ -108,7 +108,7 @@ The system calculates the following metrics:
 
 	* Twitter, Reuters, and NY Times are disabled
 	* Yahoo Finance appears to be broken in tm.plugins.webmining
-	* Installling  rsruby can be tricky. Here is an example, using RVM
+	* Installing  rsruby can be tricky. Here is an example, using RVM
 	  on a Linux system:
 
 	sudo rvm all do gem install rsruby -- --with-R-home=/usr/lib/R --with-R-include=/usr/share/R/include

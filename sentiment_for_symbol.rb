@@ -20,7 +20,14 @@ module SentimentR
     ENV['R_HOME'] ||= detect_r
     @r = RSRuby.instance
     fix_graphics
+
+    $stderr.puts "Loading package 'tm'" if $DEBUG
+    @r.eval_R("suppressMessages(library('tm'))")
+
+    $stderr.puts "Loading package 'tm.plugin.webmining'" if $DEBUG
     @r.eval_R("suppressMessages(library('tm.plugin.webmining'))")
+
+    $stderr.puts "Loading package 'tm.plugin.sentiment'" if $DEBUG
     @r.eval_R("suppressMessages(library('tm.plugin.sentiment'))")
   end
 
@@ -90,9 +97,15 @@ tm.plugins.sentiment for scoring.
   def self.sentiment_query(query_str, opts)
     rv = nil
     begin
+      $stderr.puts "Evaluating " + "corpus <- WebCorpus(#{query_str})" if $DEBUG
       @r.eval_R("corpus <- WebCorpus(#{query_str})")
+
+      $stderr.puts "Evaluating " + 'corpus <- score(corpus)' if $DEBUG
       @r.eval_R('corpus <- score(corpus)')
+
+      $stderr.puts "Evaluating " + 'scores <- meta(corpus)' if $DEBUG
       rv = @r.eval_R('scores <- meta(corpus)')
+
       rv = calculate_summary(opts.summary_func) if opts.summary_func &&
                                                   (! rv.empty?)
     rescue RException => e
@@ -108,7 +121,10 @@ Invoke an R summary statistics method (such as mean or median) on the scores
 dataframe.
 =end
   def self.calculate_summary(fn)
+    $stderr.puts "Evaluating " + 
+      "v <- sapply(colnames(scores), function(x) #{fn}(scores[,x]) )" if $DEBUG
     @r.eval_R("v <- sapply(colnames(scores), function(x) #{fn}(scores[,x]) )")
+    $stderr.puts "Evaluating " + 'as.list(v)' if $DEBUG
     @r.eval_R('as.list(v)')
   end
 
@@ -210,6 +226,7 @@ representing a Table of data) or a pipe-delimited table.
               options.output = :json_raw }
 
       opts.separator "Misc Options:"
+      opts.on('-d', '--debug', 'Print debug output') { $DEBUG = true } 
       opts.on_tail('-h', '--help', 'Show help screen') { puts opts; exit 1 }
     end
 
