@@ -1,11 +1,9 @@
-sentiment-analysis
-==================
+#sentiment-analysis
 
 Ruby and R scripts for performing sentiment analysis.
 
 
-sentiment_for_symbol
-====================
+##sentiment-for-symbol
 
 This utility performs one or more web searches, then calculates sentiment scores
 on the results. These scores can be reported per-result (e.g. 10-20 scores per
@@ -21,8 +19,7 @@ Supported search engines:
 	* Yahoo Finance
 	* Yahoo InPlay
 
-Usage:
-------
+###Usage:
 
 	Usage: sentiment_for_symbol.rb TERM [...]
 	Perform sentiment analysis on a web query for keyword
@@ -44,8 +41,7 @@ Usage:
 	Misc Options:
 	    -h, --help                       Show help screen
 	
-Examples:
----------
+###Examples:
 
 	# Output results for Google News search of 'Home Depot' and 'DeWalt'
 	./sentiment_for_symbol.rb 'Home Depot' 'DeWalt'
@@ -63,8 +59,7 @@ Examples:
 	# Same, but report the mean value instead of the median
 	./sentiment_for_symbol.rb -f -M -p MSFT AAPL GOOG
 
-Sentiment Analysis
-------------------
+###Sentiment Analysis
 
 The R plugin used in this script is based on the [Lydia/TextMap] (http://www/textmap.com) system.
 
@@ -76,40 +71,44 @@ The R plugin used in this script is based on the [Lydia/TextMap] (http://www/tex
 The system calculates the following metrics:
 
   * polarity
+
 	p - n / p + n
 	# diff of positive/negative sentiment refs / total num of sentiment refs
 
   * sentiment
+
 	p + n / N
 	# total num of sentiment references / total num of references
 
   * pos_refs_per_ref
+
 	p / N
 	# total num of positive sentiment references / total num of references
 
   * neg_refs_per_ref
+
 	n / N
 	# total num of negative sentiment references / total num of references
 
   * senti_diffs_per_ref
+
 	p - n / N
 	# num positive references / total num of references
 
 
-Dependencies
-------------
+###Dependencies
 
   * [R] (http://www.r-project.org/)
   * R package [tm.plugins.webmining] (http://cran.r-project.org/web/packages/tm.plugin.webmining/index.html)
   * R package [tm.plugins.sentiment] (https://r-forge.r-project.org/R/?group_id=1048)
   * [rsruby] (https://github.com/alexgutteridge/rsruby)
    
-=/usr/share/R/include
 
-Notes
------
+###Notes
+
 	* Twitter, Reuters, and NY Times are disabled
 	* Yahoo Finance appears to be broken in tm.plugins.webmining
 	* Installling  rsruby can be tricky. Here is an example, using RVM
 	  on a Linux system:
-	 sudo rvm all do gem install rsruby -- --with-R-home=/usr/lib/R --with-R-include=/usr/share/R/include
+
+	sudo rvm all do gem install rsruby -- --with-R-home=/usr/lib/R --with-R-include=/usr/share/R/include

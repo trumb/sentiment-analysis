@@ -11,11 +11,9 @@ require 'rubygems'
 require 'json/ext'
 require 'rsruby'
 
-# convert R data frames to Ruby dataframes
-#require 'dataframe'
-#theR.class_table['data.frame'] = lambda{|x| DataFrame.new(x)}
-#RSRuby.set_default_mode(RSRuby::CLASS_CONVERSION)
-
+=begin rdoc
+Sentiment Analysis methods that require R.
+=end
 module SentimentR
 
   def self.initialize_r
@@ -42,6 +40,11 @@ module SentimentR
     end
   end
 
+=begin rdoc
+Some R graphics subsystems don't play nice on the command line. This fixes that.
+
+Note: This is only necessary if plotting to a widget.
+=end
   def self.fix_graphics
     fix = nil
     case RUBY_PLATFORM
@@ -55,7 +58,12 @@ module SentimentR
   
   # ----------------------------------------------------------------------
 
+=begin rdoc
+Perform a sentiment analysis using tm.plugins.webmining and tm.plugins.sentiment
+=end
   def self.sentiment_analysis(opts)
+    # FIXME : This should really just build a corpus for each term using all
+    #         engines, then invoke the sentiment analysis on the corpus.
     terms = {}
     opts.query_terms.each do |term|
       terms[term] = {}
@@ -75,13 +83,18 @@ module SentimentR
     terms
   end
 
+=begin rdoc
+Perform a web query using tm.plugins.webmining, then sent the corpus to
+tm.plugins.sentiment for scoring.
+=end
   def self.sentiment_query(query_str, opts)
     rv = nil
     begin
       @r.eval_R("corpus <- WebCorpus(#{query_str})")
       @r.eval_R('corpus <- score(corpus)')
       rv = @r.eval_R('scores <- meta(corpus)')
-      rv = calculate_summary(opts.summary_func) if opts.summary_func
+      rv = calculate_summary(opts.summary_func) if opts.summary_func &&
+                                                  (! rv.empty?)
     rescue RException => e
       $stderr.puts "ERROR IN QUERY #{query_str.inspect}"
       $stderr.puts e.message
@@ -90,6 +103,10 @@ module SentimentR
     rv || {}
   end
 
+=begin rdoc
+Invoke an R summary statistics method (such as mean or median) on the scores
+dataframe.
+=end
   def self.calculate_summary(fn)
     @r.eval_R("v <- sapply(colnames(scores), function(x) #{fn}(scores[,x]) )")
     @r.eval_R('as.list(v)')
@@ -97,6 +114,10 @@ module SentimentR
 
   # ----------------------------------------------------------------------
 
+=begin rdoc
+Supported search engines.
+See http://cran.rstudio.com/web/packages/tm.plugin.webmining/tm.plugin.webmining.pdf
+=end
   ENGINES = {
     :google_blog => 'GoogleBlogSearchSource',
     :google_finance => 'GoogleFinanceSource',
@@ -109,6 +130,10 @@ module SentimentR
     :yahoo_news => 'YahooNewsSource'
   }
 
+=begin rdoc
+Build a tm.plugins.webmining function invocation based on the engine and search
+term.
+=end
   def self.build_query(engine, term)
     # TODO: support for nytimes, twitter, reuters
     "#{ENGINES[engine]}('#{term}')"
@@ -116,15 +141,23 @@ module SentimentR
 
   # ----------------------------------------------------------------------
 
+=begin rdoc
+Return a string representing the sentiment analysis results.
+This can be a JSON-serialized data structure (either a raw Hash, or an Array
+representing a Table of data) or a pipe-delimited table.
+=end
   def self.output_sentiment(term_scores, opts)
     return JSON.pretty_generate(term_scores) if opts.output == :json_raw
 
     lines = []
     header = nil
     term_scores.each do |term, h|
+      next if h.empty?
+
       header ||= h.keys.sort - ['engine']
+      engines = h['engine']
       lines += header.map { |k| [h[k]].flatten }.transpose.map { |a| 
-                                a.unshift h['engine']; a.unshift term }
+                                a.unshift engines.shift; a.unshift term }
     end
     header.unshift 'engine'
     header.unshift 'keyword'
@@ -134,6 +167,7 @@ module SentimentR
                                  JSON.pretty_generate(lines)
   end
 
+  # ----------------------------------------------------------------------
   def self.handle_options(args)
 
     options = OpenStruct.new
@@ -205,11 +239,8 @@ if __FILE__ == $0
 end
 
 __END__
-Sentiment analysis noted:
 
-  http://icwsm.org/papers/3--Godbole-Srinivasaiah-Skiena.pdf
-  http://statmath.wu.ac.at/courses/SNLP/Presentations/DA-Sentiment.pdf
-
+# Notes:
 Subjectivity indicates proportion of sentiment to frequency of occurrence, 
 while polarity indicates percentage of positive sentiment references among 
 total sentiment references.
@@ -224,6 +255,8 @@ neg_refs_per_ref :      n / N
           total num of negative sentiment references / total num of references
 senti_diffs_per_ref :   p - n / N
           num positive references / total num of references
+
+Median of these scores is best -- suppress outliers
 
 # TODO: limit to sentences containing keyword
   library(openNLP)
