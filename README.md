@@ -73,27 +73,27 @@ The system calculates the following metrics:
   * polarity
 
 	p - n / p + n
-	# diff of positive/negative sentiment refs / total num of sentiment refs
+	> diff of positive/negative sentiment refs / total num of sentiment refs
 
   * sentiment
 
 	p + n / N
-	# total num of sentiment references / total num of references
+	> total num of sentiment references / total num of references
 
   * pos_refs_per_ref
 
 	p / N
-	# total num of positive sentiment references / total num of references
+	> total num of positive sentiment references / total num of references
 
   * neg_refs_per_ref
 
 	n / N
-	# total num of negative sentiment references / total num of references
+	> total num of negative sentiment references / total num of references
 
   * senti_diffs_per_ref
 
 	p - n / N
-	# num positive references / total num of references
+	> num positive references / total num of references
 
 
 ###Dependencies
