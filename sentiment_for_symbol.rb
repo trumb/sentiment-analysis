@@ -11,13 +11,22 @@ require 'rubygems'
 require 'json/ext'
 require 'rsruby'
 
+# TODO: clean corpus before sending to sentiment
+
 =begin rdoc
 Sentiment Analysis methods that require R.
+
+R_HOME : top-level directory of the R installation to run
 =end
 module SentimentR
 
-  def self.initialize_r
-    ENV['R_HOME'] ||= detect_r
+  def self.initialize_r(opts)
+    # set R_HOME to location of R install
+    ENV['R_HOME'] ||= (opts.dir || detect_r)
+    if ! (File.exist? ENV['R_HOME'].to_s)
+      raise "Use --r-dir or set R_HOME to R install directory"
+    end
+
     @r = RSRuby.instance
     fix_graphics
 
@@ -29,21 +38,40 @@ module SentimentR
 
     $stderr.puts "Loading package 'tm.plugin.sentiment'" if $DEBUG
     @r.eval_R("suppressMessages(library('tm.plugin.sentiment'))")
+
+    if opts.ident_file
+      $stderr.puts "Loading credentials file '#{opts.ident_file}" if $DEBUG
+      @r.eval_r("load('#{opts.ident_file}')")
+      # TODO: if twitter ...
+    end
   end
 
+=begin rdoc
+=end
+  def self.detect_unix_r
+    path = `which R`
+    return nil if (! path) || path.empty?
+
+    path = File.join( path.split('/bin/R')[0], 'lib', 'R' )
+    (File.exist? path) ? path : nil
+  end
+
+=begin rdoc
+Return the top-level directory of the system R installation.
+=end
   def self.detect_r
     # TODO: actually attempt to detect if R is installed
     case RUBY_PLATFORM
     when /win32/ 
       'C:/Program Files/R'  # probably wrong
-    when /linux/
-      '/usr/lib/R'
+    when /linux/, /freebsd/
+      detect_unix_r || '/usr/lib/R'
     when /darwin/
       '/Library/Frameworks/R.framework/Resources'
     when /freebsd/
-      '/usr/local/lib/R'  # probably wrong
+      detect_unix_r || '/usr/local/lib/R'  # probably wrong
     else
-      ''
+      nil
     end
   end
 
@@ -140,11 +168,13 @@ See http://cran.rstudio.com/web/packages/tm.plugin.webmining/tm.plugin.webmining
     :google_news => 'GoogleNewsSource',
     #:nytimes => 'NYTimesSource', # appid = user_app_id
     #:reutersnews => 'ReutersNewsSource', # query: businessNews
-    #:twitter => 'TwitterSource',
+    :twitter => 'TwitterSource',
     :yahoo_finance => 'YahooFinanceSource',
     :yahoo_inplay => 'YahooInplaySource',
     :yahoo_news => 'YahooNewsSource'
   }
+
+  IDENT_ENGINES = [ :nytimes, :twitter ]
 
 =begin rdoc
 Build a tm.plugins.webmining function invocation based on the engine and search
@@ -189,6 +219,8 @@ representing a Table of data) or a pipe-delimited table.
     options = OpenStruct.new
     options.engines = []
     options.query_terms = []
+    options.ident_file = nil
+    options.r_dir = nil
     options.summary_func = nil
     options.output = :json_table
 
@@ -211,7 +243,7 @@ representing a Table of data) or a pipe-delimited table.
               options.engines << :yahoo_inplay }
       opts.on('-N', '--yahoo-news', 'Include Yahoo News search') { 
               options.engines << :yahoo_news }
-      #opts.on('-t', '--twitter', 'Twitter') { options.engines << :twitter }
+      opts.on('-t', '--twitter', 'Twitter') { options.engines << :twitter }
 
       opts.separator "Summary Options:"
       opts.on('-m', '--median', 'Calculate median') { 
@@ -227,6 +259,10 @@ representing a Table of data) or a pipe-delimited table.
 
       opts.separator "Misc Options:"
       opts.on('-d', '--debug', 'Print debug output') { $DEBUG = true } 
+      opts.on('--id str', 'ID or credentials file (e.g. twitter.RData') { |str|
+        options.ident_file = str }
+      opts.on('--r-dir str', 'Top-level directory of R installation') { |str|
+        options.r_dir = str }
       opts.on_tail('-h', '--help', 'Show help screen') { puts opts; exit 1 }
     end
 
@@ -250,7 +286,7 @@ end
 # ----------------------------------------------------------------------
 if __FILE__ == $0
   options = SentimentR.handle_options(ARGV)
-  SentimentR.initialize_r
+  SentimentR.initialize_r(options.r_dir)
   results = SentimentR.sentiment_analysis options
   puts SentimentR.output_sentiment(results, options)
 end
