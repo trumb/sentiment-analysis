@@ -33,6 +33,7 @@ Supported search engines:
 	    -F, --yahoo-finance              Include Yahoo Finance search
 	    -I, --yahoo-inplay               Include Yahoo InPlay search
 	    -N, --yahoo-news                 Include Yahoo News search
+	Other Engines:
 	    -t, --twitter                    Twitter
 	Summary Options:
 	    -m, --median                     Calculate median

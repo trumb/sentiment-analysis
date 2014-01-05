@@ -281,6 +281,8 @@ representing a Table of data) or a pipe-delimited table.
               options.engines << :yahoo_inplay }
       opts.on('-N', '--yahoo-news', 'Include Yahoo News search') { 
               options.engines << :yahoo_news }
+
+      opts.separator "Other Engines:"
       opts.on('-t', '--twitter', 'Twitter') { options.engines << :twitter }
 
       opts.separator "Summary Options:"
