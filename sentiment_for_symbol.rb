@@ -13,6 +13,8 @@ require 'rsruby'
 
 # TODO: clean corpus before sending to sentiment
 
+$DEBUG = false
+
 =begin rdoc
 Sentiment Analysis methods that require R.
 
@@ -39,14 +41,45 @@ module SentimentR
     $stderr.puts "Loading package 'tm.plugin.sentiment'" if $DEBUG
     @r.eval_R("suppressMessages(library('tm.plugin.sentiment'))")
 
+    # Define a replacement Twitter source as the webmining one is broken
+    define_twitter_source if opts.engines.include? :twitter
+
+    # Load the credentials in the specified file (required for Twitter)
     if opts.ident_file
-      $stderr.puts "Loading credentials file '#{opts.ident_file}" if $DEBUG
-      @r.eval_r("load('#{opts.ident_file}')")
-      # TODO: if twitter ...
+      $stderr.puts "Loading credentials file '#{opts.ident_file}'" if $DEBUG
+      @r.eval_R("load('#{opts.ident_file}')")
     end
   end
 
+  def self.define_twitter_source
+    $stderr.puts "Loading package 'twitteR'" if $DEBUG
+    @r.eval_R("suppressMessages(library('twitteR'))")
+
+    $stderr.puts "Defining function 'TwitteRSource'" if $DEBUG
+    @r.eval_R("TwitteRSource <- function(query, n=1500, 
+                                         params=list(lang='en'), ...) {
+               dbg <- #{$DEBUG.to_s.upcase}
+
+               if (! exists('twitter.credentials') ) {
+                 write('twitter.credentials object is not defined!', stderr())
+                 # return an empty results object
+                 return( VectorSource(c('')) )
+               }
+
+               if (dbg) write('Authenticating twitter via OAuth', stderr())
+               registerTwitterOAuth(twitter.credentials)
+
+               if (dbg) write(paste('Sending query \"', query, '\"', sep=''), 
+                              stderr())
+               rv <- searchTwitter(query, n=n, lang=params$lang)
+               # TODO: convert result to TextMining source
+               # print(summary(rv))
+               VectorSource(c('')) 
+              }")
+  end
+
 =begin rdoc
+Detect the install location of R on *NIX using the `which` command.
 =end
   def self.detect_unix_r
     path = `which R`
@@ -168,7 +201,8 @@ See http://cran.rstudio.com/web/packages/tm.plugin.webmining/tm.plugin.webmining
     :google_news => 'GoogleNewsSource',
     #:nytimes => 'NYTimesSource', # appid = user_app_id
     #:reutersnews => 'ReutersNewsSource', # query: businessNews
-    :twitter => 'TwitterSource',
+    #:twitter => 'TwitterSource', # BROKEN IN tm.plugin.webmining
+    :twitter => 'TwitteRSource',
     :yahoo_finance => 'YahooFinanceSource',
     :yahoo_inplay => 'YahooInplaySource',
     :yahoo_news => 'YahooNewsSource'
@@ -181,7 +215,7 @@ Build a tm.plugins.webmining function invocation based on the engine and search
 term.
 =end
   def self.build_query(engine, term)
-    # TODO: support for nytimes, twitter, reuters
+    # TODO: support for nytimes, reuters
     "#{ENGINES[engine]}('#{term}')"
   end
 
@@ -259,6 +293,7 @@ representing a Table of data) or a pipe-delimited table.
 
       opts.separator "Misc Options:"
       opts.on('-d', '--debug', 'Print debug output') { $DEBUG = true } 
+      # TODO: appid
       opts.on('--id str', 'ID or credentials file (e.g. twitter.RData') { |str|
         options.ident_file = str }
       opts.on('--r-dir str', 'Top-level directory of R installation') { |str|
@@ -286,7 +321,7 @@ end
 # ----------------------------------------------------------------------
 if __FILE__ == $0
   options = SentimentR.handle_options(ARGV)
-  SentimentR.initialize_r(options.r_dir)
+  SentimentR.initialize_r(options)
   results = SentimentR.sentiment_analysis options
   puts SentimentR.output_sentiment(results, options)
 end
