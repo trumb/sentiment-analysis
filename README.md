@@ -59,6 +59,10 @@ Supported search engines:
 	# Same, but report the mean value instead of the median
 	./sentiment_for_symbol.rb -f -M -p MSFT AAPL GOOG
 
+	# Use twitter to search for string 'BlackBerry'
+	# See Notes for en explanation of the --id parameter.
+	./sentiment_for_symbol.rb -t --id twitter_credentials.RData BlackBerry
+
 ###Sentiment Analysis
 
 The R plugin used in this script is based on the [Lydia/TextMap] (http://www/textmap.com) system.
@@ -98,16 +102,29 @@ The system calculates the following metrics:
 
 ###Dependencies
 
-  * [R] (http://www.r-project.org/)
+  * [R] (http://www.r-project.org)
   * R package [tm.plugins.webmining] (http://cran.r-project.org/web/packages/tm.plugin.webmining/index.html)
   * R package [tm.plugins.sentiment] (https://r-forge.r-project.org/R/?group_id=1048)
+  * R package [twitteR] (http://cran.r-project.org/web/packages/twitteR/index.html)
   * [rsruby] (https://github.com/alexgutteridge/rsruby)
    
 
 ###Notes
 
-	* Twitter, Reuters, and NY Times are disabled
+	* Reuters, and NY Times are disabled
 	* Yahoo Finance appears to be broken in tm.plugins.webmining
+	* Twitter is broken in tm.plugin.webmining, and has been implemented
+	  using the TwitteR package. The authentication mechanism uses
+	  Twitter's application-only OAuth authentication, documented here:
+	    https://dev.twitter.com/docs/auth/application-only-auth
+	  The OAuth credential must be generated in R and stored in a variable
+	  named 'twitter.credentials', which is then serialized to an .RData
+	  file. This file is passed using the --id parameter. Note that an
+	  R script for creating this file is provided: 
+	    utils/generate_twitter_credentials.R
+	  Source this file from within R in order to generate the credentials
+	  file twitter_credentials.RData in the working directory:
+	    source('utils/generate_twitter_credentials.R')
 	* Installing  rsruby can be tricky. Here is an example, using RVM
 	  on a Linux system:
 

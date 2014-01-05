@@ -1,9 +1,23 @@
 #!/usr/bin/env R
-# R module for Twitter developer API
+# R utility to generate a credentials file for a Twitter application.
+# Usage: source from within R.
+#        source('utils/generate_twitter_credentials.R')
+# (c) Copyright 2014 mkfs (https://github.com/mkfs)
+# NOT FOR REDISTRIBUTION
 
-# IMPORTANT: set these to your Twitter application OAuth consumer key and secret
-twitter.consumer.key = ''
-twitter.consumer.secret = ''
+library(twitteR)
+
+# ----------------------------------------------------------------------
+# Prompt for Consumer key and Secret
+cat("Obtain consumer key and secret for Twitter application-only auth here:")
+cat("https://dev.twitter.com/docs/auth/application-only-auth")
+twitter.consumer.key  <- readline('Consumer Key: ')
+print(paste('KEY:', twitter.consumer.key))
+twitter.consumer.secret  <- readline('Consumer Secret: ')
+print(paste('SECRET:', twitter.consumer.secret))
+# NOTE: The above can be replaced by hard-coding the consumer key and secret:
+# twitter.consumer.key  <- ''
+# twitter.consumer.secret <- ''
 
 # ----------------------------------------------------------------------
 Rurl <- "https://api.twitter.com/oauth/request_token"
@@ -18,6 +32,7 @@ twitter.credentials <- OAuthFactory$new(consumerKey=twitter.consumer.key,
 		                        authURL = AUurl )
   
 # Complete OAUTH authentication handshake
+# Note: This will prompt the user for a PIN from a provided URL
 twitter.credentials$handshake()
 # Save OAuth token to file
 save(twitter.credentials, file="twitter_credentials.RData")

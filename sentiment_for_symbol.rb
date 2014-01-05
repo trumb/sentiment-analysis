@@ -51,6 +51,12 @@ module SentimentR
     end
   end
 
+=begin rdoc
+Defines the R function TwitteRSource, which uses the twitteR package and
+pre-loaded twitter application OAuth credentials in order to perform a
+search on the query. The return value of the R function is a tm VectorSource 
+object.
+=end
   def self.define_twitter_source
     $stderr.puts "Loading package 'twitteR'" if $DEBUG
     @r.eval_R("suppressMessages(library('twitteR'))")
@@ -71,10 +77,8 @@ module SentimentR
 
                if (dbg) write(paste('Sending query \"', query, '\"', sep=''), 
                               stderr())
-               rv <- searchTwitter(query, n=n, lang=params$lang)
-               # TODO: convert result to TextMining source
-               # print(summary(rv))
-               VectorSource(c('')) 
+               lst <- searchTwitter(query, n=n, lang=params$lang)
+               VectorSource( sapply(lst, function(x) x$text) )
               }")
   end
 
@@ -293,7 +297,7 @@ representing a Table of data) or a pipe-delimited table.
 
       opts.separator "Misc Options:"
       opts.on('-d', '--debug', 'Print debug output') { $DEBUG = true } 
-      # TODO: appid
+      # TODO: appid for nytimes
       opts.on('--id str', 'ID or credentials file (e.g. twitter.RData') { |str|
         options.ident_file = str }
       opts.on('--r-dir str', 'Top-level directory of R installation') { |str|
