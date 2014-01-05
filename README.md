@@ -32,6 +32,7 @@ Supported search engines:
 	    -F, --yahoo-finance              Include Yahoo Finance search
 	    -I, --yahoo-inplay               Include Yahoo InPlay search
 	    -N, --yahoo-news                 Include Yahoo News search
+	    -t, --twitter                    Twitter
 	Summary Options:
 	    -m, --median                     Calculate median
 	    -M, --mean                       Calculate mean
@@ -39,6 +40,9 @@ Supported search engines:
 	    -p, --pipe-delim                 Print pipe-delimited table output
 	    -r, --raw                        Serialize output as a Hash, not an Array
 	Misc Options:
+	    -d, --debug                      Print debug output
+	        --id str                     ID or credentials file (e.g. twitter.RData
+	        --r-dir str                  Top-level directory of R installation
 	    -h, --help                       Show help screen
 	
 ###Examples:
@@ -67,35 +71,28 @@ Supported search engines:
 
 The R plugin used in this script is based on the [Lydia/TextMap] (http://www/textmap.com) system.
 
-
   [TextMap Paper] (http://icwsm.org/papers/3--Godbole-Srinivasaiah-Skiena.pdf)
-
   [Presentation for tm.plugins.sentiment] (http://statmath.wu.ac.at/courses/SNLP/Presentations/DA-Sentiment.pdf)
 
 The system calculates the following metrics:
 
   * polarity
-
 	p - n / p + n
 	> diff of positive/negative sentiment refs / total num of sentiment refs
 
   * sentiment
-
 	p + n / N
 	> total num of sentiment references / total num of references
 
   * pos_refs_per_ref
-
 	p / N
 	> total num of positive sentiment references / total num of references
 
   * neg_refs_per_ref
-
 	n / N
 	> total num of negative sentiment references / total num of references
 
   * senti_diffs_per_ref
-
 	p - n / N
 	> num positive references / total num of references
 
