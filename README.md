@@ -15,6 +15,7 @@ Supported search engines:
 	* Google News
 	* Google Finance
 	* Google Blog
+	* Twitter
 	* Yahoo News
 	* Yahoo Finance
 	* Yahoo InPlay
